@@ -1,0 +1,6 @@
+{
+  "environment": "MOCK",
+  "mode": "PAPER",
+  "candleIntervalSec": 1,
+  "marketOpenDelayMin": 0.1
+}
