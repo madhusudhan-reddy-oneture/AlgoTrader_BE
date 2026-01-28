@@ -1,7 +1,7 @@
 import fs from 'fs';
 const { WebSocketV2 } = require("smartapi-javascript");
 import { getAngelFeedToken } from "./auth";
-import { Tick, StockInfo } from "./types";
+import { Tick, StockInfo, AngelCredentials } from "./types";
 
 const ACTION = {
     Subscribe: 1,
@@ -20,23 +20,21 @@ export class AngelOneAdapter {
     private ws!: any;
     private listeners: Array<(tick: Tick) => void> = [];
     private tokenMap: Record<string, StockInfo> = {};
-    // private tickStream = fs.createWriteStream(
-    //     "ticks.jsonl",
-    //     { flags: "a" }
-    // );
+
+
     constructor(private stocks: StockInfo[]) {
         stocks.forEach(s => {
             this.tokenMap[s.token] = s;
         });
     }
 
-    async connect(): Promise<void> {
-        const session = await getAngelFeedToken();
+    async connect(credentials: AngelCredentials): Promise<void> {
+        const session = await getAngelFeedToken(credentials);
 
         this.ws = new WebSocketV2({
-            clientcode: process.env.CLIENT_ID, //"A768340",
+            clientcode: credentials.clientId, //"A768340",
             jwttoken: session.jwtToken,
-            apikey: process.env.APIKEY, //"omT0j1lA",
+            apikey: credentials.apiKey, //"omT0j1lA",
             feedtype: session.feedToken,
         });
 

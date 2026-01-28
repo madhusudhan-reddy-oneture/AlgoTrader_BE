@@ -20,17 +20,17 @@ export class MockMarketDataAdapter implements MarketDataAdapter {
     }
 
     public start(): void {
-        this.intervalId = setInterval(() => this.generateTick(), 500)
+        this.intervalId = setInterval(() => this.generateTick(), 1000)
     }
 
     private generateTick(): void {
-        // 🔹 Sensex movement (±0.15%)
+        // Sensex movement (±0.15%)
         const sensexPctChange = (Math.random() - 0.5) * 0.05;
         this.sensexPrice *= (1 + sensexPctChange);
 
         this.emit("SENSEX", this.sensexPrice);
 
-        // 🔹 Stock movements correlated with Sensex
+        // Stock movements correlated with Sensex
         this.stocks.forEach(stock => {
             const beta = 0.8 + Math.random() * 0.7; // 0.8 → 1.5
             const noise = (Math.random() - 0.5) * 0.002;

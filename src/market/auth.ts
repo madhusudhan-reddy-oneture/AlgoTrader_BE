@@ -1,28 +1,16 @@
 import { SmartAPI } from 'smartapi-javascript';
-import readline from "readline";
+import { AngelCredentials } from './types';
 
-export async function getAngelFeedToken() {
+export async function getAngelFeedToken(creds: AngelCredentials) {
 
     const api = new SmartAPI({
-        api_key: process.env.APIKEY ?? "", // "omT0j1lA"
+        api_key: creds.apiKey, // "omT0j1lA"
     })
 
-    const totp = await new Promise<string>((resolve) => {
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout,
-        });
-        rl.question("Enter current TOTP from app: ", (code) => {
-            rl.close();
-            resolve(code.trim());
-        });
-    });
-
-
     const session = await api.generateSession(
-        process.env.CLIENT_ID ?? "", //"A768340",
-        "8430",
-        totp
+        creds.clientId, //"A768340",
+        creds.password,  //"8430",
+        creds.totp
     );
 
     if (!session || !session.data || !session.data.feedToken) {

@@ -54,6 +54,7 @@ export class StateStore {
     }
 
     public initSensex(basePrice: number) {
+        this.sensex.currPrice = basePrice;
         this.sensex.basePrice = basePrice;
         this.sensex.lastTriggerTime = null;
         this.sensex.lastDirection = "NEUTRAL";

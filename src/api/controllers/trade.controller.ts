@@ -3,6 +3,44 @@ import { TradeModel } from '../../db/models/Trade.model';
 
 export class TradeController {
 
+    static async getAllTrades(req: Request, res: Response) {
+        try {
+
+            const page = Number(req.query.page ?? 0);
+            const limit = Number(req.query.limit ?? 0);
+            const actionsParam = req.query.actions as string | undefined;
+            const symbolsParam = req.query.symbols as string | undefined;
+
+            const query: any = {};
+            if (symbolsParam) {
+                query.symbol = symbolsParam.split(",");
+            }
+
+            if (actionsParam) {
+                const actions = actionsParam.split(",");
+                query.action = actions;
+            }
+
+            const skip = page * limit;
+
+            const [items, total] = await Promise.all([
+                TradeModel.find(query)
+                    .sort({ timestamp: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+
+                TradeModel.countDocuments(query)
+            ]);
+
+            res.json({ items, total });
+        }
+        catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Failed to fetch trades' });
+        }
+    }
+
     static async getTrades(req: Request, res: Response) {
         try {
             const symbol = req.params.symbol;

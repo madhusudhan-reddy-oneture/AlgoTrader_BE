@@ -3,6 +3,7 @@ import { TradeController } from '../controllers/trade.controller';
 
 const router = Router();
 
+router.get('/', TradeController.getAllTrades);
 router.get('/:symbol', TradeController.getTrades);
 
 export default router;
