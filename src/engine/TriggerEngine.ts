@@ -1,3 +1,4 @@
+import { Direction } from './../state/types';
 import { StrategyInput } from './../strategy/types';
 import { Tick } from "../market/types";
 import { StateStore } from "../state/StateStore";
@@ -14,7 +15,16 @@ export class TriggerEngine {
         // EventBus.emit("tick", tick);
         const sensex = this.state.getSensex();
         if (tick.symbol == "SENSEX") {
-            this.state.updateSensex(tick.price, sensex.basePrice, sensex.lastDirection)
+
+            const direction = this.strategy.evaluateSensex(tick.price, sensex.basePrice);
+
+            if (direction !== "NEUTRAL") {
+                this.state.updateSensex(tick.price, tick.price, direction, true);
+            }
+            else {
+                this.state.updateSensex(tick.price, sensex.basePrice, sensex.lastDirection)
+
+            }
             return null
         }
 
@@ -24,20 +34,25 @@ export class TriggerEngine {
             return null;
         }
 
-        this.state.updateStock(tick.symbol, tick.price, stock.basePrice, stock.lastDirection)
+        // this.state.updateStock(tick.symbol, tick.price, stock.basePrice, stock.lastDirection) // upate curr price of that stock
         let lastStockPrice = stock.basePrice;
         let lastSensexPrice = sensex.basePrice;
 
         let strategyInput: StrategyInput = {
-            sensexPrice: sensexPrice,
-            sensexBase: sensex.basePrice,
             stockPrice: tick.price,
             stockBase: stock.basePrice,
-            lastSensexDirection: sensex.lastDirection,
-            lastStockDirection: stock.lastDirection
+            lastSensexDirection: sensex.lastDirection
         }
 
         const result = this.strategy.evaluate(strategyInput);
+
+        if (result.stockTriggered) {
+            this.state.updateStock(stock.symbol, tick.price, tick.price, result.stockDirection, true);
+        }
+        else {
+            this.state.updateStock(tick.symbol, tick.price, stock.basePrice, stock.lastDirection) // upate curr price of that stock
+        }
+
 
         // const isStockTriggered = result.stockDirection !== "NEUTRAL";
         // const isSensexTriggered = result.sensexDirection !== "NEUTRAL";
@@ -53,20 +68,20 @@ export class TriggerEngine {
         //     timestamp: tick.timestamp
         // })
 
+        // if (result.stockTriggered) {
+        //     this.state.updateStock(stock.symbol, tick.price, tick.price, result.stockDirection, true);
+        // }
+
+        // if (result.sensexTriggered) {
+        //     this.state.updateSensex(sensexPrice, sensexPrice, result.sensexDirection, true);
+        // }
+
         if (result.stockTriggered) {
-            this.state.updateStock(stock.symbol, tick.price, tick.price, result.stockDirection, true);
-        }
-
-        if (result.sensexTriggered) {
-            this.state.updateSensex(sensexPrice, sensexPrice, result.sensexDirection, true);
-        }
-
-        if (result.stockTriggered || result.sensexTriggered) {
             const triggerEvent = {
                 symbol: stock.symbol,
                 action: result.action,
                 stockDirection: result.stockDirection,
-                sensexDirection: result.sensexDirection,
+                sensexDirection: sensex.lastDirection,
                 stockPrice: tick.price,
                 sensexPrice: sensexPrice,
                 lastStockPrice: lastStockPrice,
