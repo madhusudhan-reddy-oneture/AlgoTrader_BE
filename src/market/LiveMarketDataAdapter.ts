@@ -32,9 +32,9 @@ export class AngelOneAdapter {
         const session = await getAngelFeedToken(credentials);
 
         this.ws = new WebSocketV2({
-            clientcode: credentials.clientId, //"A768340",
+            clientcode: credentials.clientId,
             jwttoken: session.jwtToken,
-            apikey: credentials.apiKey, //"omT0j1lA",
+            apikey: credentials.apiKey,
             feedtype: session.feedToken,
         });
 
@@ -44,7 +44,6 @@ export class AngelOneAdapter {
         this.ws.on("tick", (tickData: any) => {
             if (!tickData?.token || !tickData?.last_traded_price) return;
 
-            // this.tickStream.write(JSON.stringify(tickData) + "\n");
             const token = tickData.token.replace(/"/g, "");
             const stock = this.tokenMap[token];
 

@@ -37,13 +37,17 @@ export class SessionController {
 
     static async startSession(req: Request, res: Response) {
         try {
-            const { apiKey, clientId, password, totp } = req.body; if (!clientId || !totp || !password || !apiKey) {
-                return res.status(400).json({ message: 'All credentials (clientId, password, apiKey, totp) are required' });
+            const totp = req.body.totp; if (!totp) {
+                return res.status(400).json({ message: 'Totp is invalid' });
             }
 
             if (marketSession.isMarketRunning()) {
                 return res.status(400).json({ message: 'Session is already running' });
             }
+
+            const apiKey = process.env.ANGEL_API_KEY ?? "";
+            const clientId = process.env.ANGEL_CLIENT_ID ?? "";
+            const password = process.env.ANGEL_PASSWORD ?? "";
 
             await marketSession.start({ apiKey, clientId, password, totp });
 
@@ -92,6 +96,8 @@ export class SessionController {
             res.status(500).json({ message: 'File upload failed' });
         }
     }
+
+
 
 
 }

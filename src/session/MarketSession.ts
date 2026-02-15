@@ -13,6 +13,7 @@ import path from 'path';
 import fs from "fs";
 import { BhavCopyService } from '../market/BhavCopyService';
 import { StockInfo, Tick } from '../market/types';
+import { AppStateModel } from '../db/models/Appstate.model';
 
 export class MarketSession {
     private isRunning: boolean = false;
@@ -52,15 +53,17 @@ export class MarketSession {
         const stocksConfig = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/tokenMaster.json"), "utf-8"));
 
         // 2. Initialize Market State (Prices)
-        const bhavCopyService = new BhavCopyService();
-        const closingPriceMap = await bhavCopyService.loadClosingPrices(stocksConfig);
+        await this.initializeState(stocksConfig);
 
-        stocksConfig.filter((stock: StockInfo) => stock.symbol != "SENSEX").forEach((stock: StockInfo) => {
-            const price = closingPriceMap[stock.symbol] || 0;
-            this.stateStore.initStock(stock.symbol, price);
-        });
+        // const bhavCopyService = new BhavCopyService();
+        // const closingPriceMap = await bhavCopyService.loadClosingPrices(stocksConfig);
 
-        this.stateStore.initSensex(closingPriceMap['SENSEX'] || 0);
+        // stocksConfig.filter((stock: StockInfo) => stock.symbol != "SENSEX").forEach((stock: StockInfo) => {
+        //     const price = closingPriceMap[stock.symbol] || 0;
+        //     this.stateStore.initStock(stock.symbol, price);
+        // });
+
+        // this.stateStore.initSensex(closingPriceMap['SENSEX'] || 0);
         const environment = process.env.APP_ENV || settingsConfig.environment || "MOCK";
 
         console.log("ENVIRONMENT:", environment);
@@ -77,6 +80,37 @@ export class MarketSession {
         this.adapter.onTick((tick: Tick) => this.handleTick(tick));
         this.isRunning = true;
         console.log("Market Session Started Successfully");
+    }
+
+    private async initializeState(stocksConfig: StockInfo[]) {
+        const bhavCopyService = new BhavCopyService();
+        const closingPriceMap = await bhavCopyService.loadClosingPrices(stocksConfig);
+
+        const savedState = await AppStateModel.findOne().sort({ timestamp: -1 });
+
+        if (savedState) {
+            console.log(`Loaded Saved State from ${savedState.timestamp}`);
+            this.stateStore.loadSnapshot(savedState);
+
+            const savedStockSymbols = new Set(savedState.stocks.map((s: any) => s.symbol));
+
+            stocksConfig.filter(s => s.symbol !== "SENSEX").forEach(stock => {
+                if (!savedStockSymbols.has(stock.symbol)) {
+                    console.log(`🆕 New Stock detected: ${stock.symbol}, initializing from BhavCopy`);
+                    const price = closingPriceMap[stock.symbol] || 0;
+                    this.stateStore.initStock(stock.symbol, price);
+                }
+            });
+
+        } else {
+            console.log("No Saved State found. Initializing strictly from BhavCopy.");
+
+            stocksConfig.filter((stock: StockInfo) => stock.symbol != "SENSEX").forEach((stock: StockInfo) => {
+                const price = closingPriceMap[stock.symbol] || 0;
+                this.stateStore.initStock(stock.symbol, price);
+            });
+            this.stateStore.initSensex(closingPriceMap['SENSEX'] || 0);
+        }
     }
 
     private handleTick(tick: Tick) {
@@ -103,6 +137,8 @@ export class MarketSession {
     async stop(): Promise<void> {
         if (!this.isRunning) return;
 
+        await this.saveState();
+
         if (this.adapter) {
             if (this.adapter instanceof AngelOneAdapter) {
                 this.adapter.close();
@@ -113,6 +149,17 @@ export class MarketSession {
 
         this.isRunning = false;
         console.log("Market session stopped");
+    }
+
+    async saveState() {
+        try {
+            const snapshot = this.stateStore.toJSON();
+            console.log(snapshot)
+            await AppStateModel.create(snapshot);
+            console.log("System State Saved to DB");
+        } catch (err) {
+            console.error("Failed to save state:", err);
+        }
     }
 
     isMarketRunning(): boolean {

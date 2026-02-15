@@ -4,12 +4,12 @@ import { AngelCredentials } from './types';
 export async function getAngelFeedToken(creds: AngelCredentials) {
 
     const api = new SmartAPI({
-        api_key: creds.apiKey, // "omT0j1lA"
+        api_key: creds.apiKey,
     })
 
     const session = await api.generateSession(
-        creds.clientId, //"A768340",
-        creds.password,  //"8430",
+        creds.clientId,
+        creds.password,
         creds.totp
     );
 

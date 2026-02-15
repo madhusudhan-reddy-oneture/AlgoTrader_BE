@@ -77,4 +77,28 @@ export class StateStore {
         }
         EventBus.emit("sensexUpdate", this.sensex);
     }
+
+    public toJSON() {
+        return {
+            sensex: this.sensex,
+            stocks: Array.from(this.stocks.values())
+        };
+    }
+
+    public loadSnapshot(snapshot: any) {
+        if (snapshot.sensex) {
+            this.sensex.currPrice = snapshot.sensex.currPrice
+            this.sensex.basePrice = snapshot.sensex.basePrice;
+            this.sensex.lastDirection = snapshot.sensex.direction;
+            this.sensex.lastTriggerTime = snapshot.sensex.lastTriggerTime;
+            EventBus.emit("sensexUpdate", this.sensex);
+        }
+
+        if (snapshot.stocks && Array.isArray(snapshot.stocks)) {
+            snapshot.stocks.forEach((savedStock: StockState) => {
+                this.stocks.set(savedStock.symbol, savedStock);
+                EventBus.emit("stockUpdate", savedStock);
+            });
+        }
+    }
 }
