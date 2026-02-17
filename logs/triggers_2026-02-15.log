@@ -358,3 +358,5 @@
 {"symbol":"VEDL-EQ","action":"HOLD","stockDirection":"DOWN","sensexDirection":"UP","stockPrice":956.91,"sensexPrice":77442.7,"lastStockPrice":1009.76,"lastSensexPrice":77778.19,"timestamp":1771170982795}
 {"symbol":"VEDL-EQ","action":"HOLD","stockDirection":"UP","sensexDirection":"DOWN","stockPrice":1006.8,"sensexPrice":75529.37,"lastStockPrice":956.91,"lastSensexPrice":75337.71,"timestamp":1771170987812}
 {"symbol":"VEDL-EQ","action":"BUY","stockDirection":"DOWN","sensexDirection":"DOWN","stockPrice":953.21,"sensexPrice":72876.81,"lastStockPrice":1006.8,"lastSensexPrice":72407.74,"timestamp":1771170993847}
+{"symbol":"VEDL-EQ","action":"HOLD","stockDirection":"UP","sensexDirection":"DOWN","stockPrice":1009.49,"sensexPrice":71651.1,"lastStockPrice":953.21,"lastSensexPrice":71011.3,"timestamp":1771171029112}
+{"symbol":"VEDL-EQ","action":"HOLD","stockDirection":"UP","sensexDirection":"DOWN","stockPrice":1064.12,"sensexPrice":70463.96,"lastStockPrice":1009.49,"lastSensexPrice":70463.96,"timestamp":1771171040201}
