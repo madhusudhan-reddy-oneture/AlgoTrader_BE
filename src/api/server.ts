@@ -10,8 +10,5 @@ export function startApiServer() {
 
     app.use('/api', apiRoutes);
 
-    const port = 3000;
-    app.listen(port, () => {
-        console.log(`API server running on port ${port}`);
-    });
+    return app;
 }

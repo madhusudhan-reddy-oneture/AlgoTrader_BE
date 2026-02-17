@@ -3,13 +3,20 @@ import { startApiServer } from './api/server';
 import { startWebSocketServer } from './ws/WebSocketServer';
 import dotenv from 'dotenv';
 import { marketSession } from './api/controllers/session.controller';
+import { createServer } from 'http';
 
 dotenv.config();
 
 async function bootstrap() {
     await connectDB();
-    startApiServer();
-    startWebSocketServer();
+    const app = startApiServer();
+    const server = createServer(app);
+    startWebSocketServer(server);
+
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, () => {
+        console.log(`🚀 Unified Server (API + WS) running on port ${PORT}`);
+    });
 }
 
 
@@ -25,7 +32,7 @@ const shutdown = async (signal: string) => {
             console.error("Failed to save state:", err);
         }
     } else {
-        console.log("ℹ️ Market session was not running.");
+        console.log("ℹMarket session was not running.");
     }
 
     console.log("Goodbye!");

@@ -4,11 +4,12 @@ import { Trade } from "../paper/types";
 import { EventBus } from "../events/EventBus";
 import { SensexState, StockState } from "../state/types";
 import { Tick } from "../market/types";
+import { Server } from "http";
 
-export function startWebSocketServer(port = 8081) {
-    const wss = new WebSocket.Server({ port });
+export function startWebSocketServer(server: Server) {
+    const wss = new WebSocket.Server({ server });
 
-    console.log(`Websocket running on ws://localhost:${port}`);
+    console.log(`Websocket running on`);
 
     wss.on("connection", (ws) => {
         ws.send(JSON.stringify({

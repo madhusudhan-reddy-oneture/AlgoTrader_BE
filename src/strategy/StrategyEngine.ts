@@ -5,37 +5,27 @@ export class StrategyEngine {
     private STOCK_THRESHOLD = 0.05;
     private SENSEX_THRESHOLD = 0.02;
 
+    public evaluateSensex(currPrice: number, basePrice: number): Direction {
+        return this.getDirection(currPrice, basePrice, this.SENSEX_THRESHOLD);
+    }
+
+
     public evaluate(input: StrategyInput): StrategyResult {
-        const sensexDirection = this.getDirection(input.sensexPrice, input.sensexBase, this.SENSEX_THRESHOLD, input.lastSensexDirection);
-        const stockDirection = this.getDirection(input.stockPrice, input.stockBase, this.STOCK_THRESHOLD, input.lastStockDirection);
-
-        const sensexTriggered = sensexDirection == "NEUTRAL" ? false : true;
-
-        // this.detectTrigger(
-        //     input.lastSensexDirection,
-        //     sensexDirection
-        // );
+        const stockDirection = this.getDirection(input.stockPrice, input.stockBase, this.STOCK_THRESHOLD);
 
         const stockTriggered = stockDirection == "NEUTRAL" ? false : true;
 
-        // this.detectTrigger(
-        //     input.lastStockDirection,
-        //     stockDirection
-        // );
+        const action = this.getAction(input.lastSensexDirection, stockDirection);
 
-        const action = this.getAction(sensexDirection, stockDirection);
-
-        if (sensexDirection != "NEUTRAL" || stockDirection !== "NEUTRAL") {
-            console.log(`SENSEX: Base -> ${input.sensexBase}, Curr --> ${input.sensexPrice}, ${sensexDirection}`)
+        if (action !== "HOLD") {
             console.log(`STOCK: Base -> ${input.stockBase}, Curr --> ${input.stockPrice}, ${stockDirection}`)
             console.log(`ACTION: ${action}`)
-
         }
 
-        return { sensexDirection, stockDirection, action, sensexTriggered, stockTriggered };
+        return { stockDirection, action, stockTriggered };
     }
 
-    private getDirection(price: number, basePrice: number, threshold: number, Direction: Direction): Direction {
+    private getDirection(price: number, basePrice: number, threshold: number): Direction {
         if (price >= basePrice * (1 + threshold)) {
             return "UP";
         }
