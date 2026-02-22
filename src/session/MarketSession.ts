@@ -13,7 +13,7 @@ import path from 'path';
 import fs from "fs";
 import { BhavCopyService } from '../market/BhavCopyService';
 import { StockInfo, Tick } from '../market/types';
-import { AppStateModel } from '../db/models/Appstate.model';
+import { AppStateModel } from '../db/models/AppState.model';
 
 export class MarketSession {
     private isRunning: boolean = false;
