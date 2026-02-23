@@ -19,7 +19,7 @@ export class MarketSession {
     private isRunning: boolean = false;
     private adapter: MockMarketDataAdapter | AngelOneAdapter | null = null;
 
-    private stateStore: StateStore;
+    public stateStore: StateStore;
     private strategyEngine: StrategyEngine;
     private triggerEngine: TriggerEngine;
     private paperTrader: PaperTrader;

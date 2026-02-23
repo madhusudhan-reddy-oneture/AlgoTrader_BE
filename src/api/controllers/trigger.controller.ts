@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { TriggerModel } from '../../db/models/Trigger.model';
+import { marketSession } from './session.controller';
 
 export class TriggerController {
 
@@ -88,36 +89,66 @@ export class TriggerController {
       const limit = Number(req.query.limit ?? 0);
       const actionsParam = req.query.actons as string | undefined;
 
-      const matchQuery: any = {};
-      if (actionsParam) {
-        const actions = actionsParam.split(',');
-        matchQuery.action = { $in: actions };
-      }
+      const latestTriggeres = await TriggerModel.aggregate([
+        {$sort: { timestamp: -1 }},
+        {$group: {
+          _id: '$symbol',
+          latestDoc: { $first: '$$ROOT' }
+        }},
+        {$replaceRoot: { newRoot: '$latestDoc' }},
 
-      const skip = page * limit;
-
-      const items = await TriggerModel.aggregate([
-        { $match: matchQuery },
-
-        { $sort: { timestamp: -1 } },
-
-        {
-          $group: {
-            _id: "$symbol",
-            latestDoc: { $first: "$$ROOT" }
-          }
-        },
-
-        { $replaceRoot: { newRoot: "$latestDoc" } },
-
-        { $sort: { symbol: 1 } },
-
-        { $skip: skip },
-        { $limit: limit }
       ]);
 
-      const uniqueSymbols = await TriggerModel.find(matchQuery).distinct('symbol');
-      const total = uniqueSymbols.length;
+      const triggerMap = new Map();
+      latestTriggeres.forEach((trigger) => {
+        triggerMap.set(trigger.symbol, trigger);
+      })
+
+      const activeStocksMap = marketSession.stateStore.getAllStocks();
+
+      const allSymbols = new Set([
+        ...Array.from(activeStocksMap.keys()),
+        ...triggerMap.keys()
+      ])
+
+      let combonedList = Array.from(allSymbols).map(symbol => {
+        const activeStock = activeStocksMap.get(symbol);
+        const trigger = triggerMap.get(symbol);
+
+        const currentPrice = activeStock ? activeStock.currPrice : (trigger ? trigger.stockPrice : 0);
+        const basePrice = activeStock ? activeStock.basePrice : (trigger ? trigger.lastStockPrice : 0);
+
+        if(trigger) {
+          return trigger;
+        }
+        else{
+          return {
+            symbol,
+            action: "-",
+            stockPrice: currentPrice,
+            lastStockPrice: basePrice,
+            sensexPrice: null,
+
+            lastSensexPrice: null,
+
+            stockDirection: "-",
+            sensexDirection: "-",
+
+            timestamp: null
+          };
+        }
+      });
+
+      if(actionsParam) {
+        const actions = actionsParam.split(',');
+        combonedList = combonedList.filter(item => actions.includes(item.action));
+      }
+
+      const total = combonedList.length;
+      const start = page * limit;
+      const end = start + limit;
+      const items = combonedList.slice(start, end);
+      
 
       res.json({ items, total })
     } catch (err) {
